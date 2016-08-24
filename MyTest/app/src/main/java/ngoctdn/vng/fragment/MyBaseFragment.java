@@ -84,9 +84,10 @@ public class MyBaseFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(mViewResource, container, false);
-        view.setOnTouchListener(new View.OnTouchListener() {
+        View.OnTouchListener listener =         new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+
                 if (getBaseActivity().getNumBackStackEntry() <= 0 || mIsAnimating) {
                     return true;
                 }
@@ -147,9 +148,11 @@ public class MyBaseFragment extends Fragment {
                     mTrackingEvent = false;
                     return true;
                 }
-                return gesture.onTouchEvent(event);
+//                return gesture.onTouchEvent(event);
+                return false;
             }
-        });
+        };
+        //view.setOnTouchListener(listener);
         onInitView(view);
         return view;
     }

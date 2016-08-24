@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -19,6 +20,8 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
@@ -60,6 +63,8 @@ public class MainActivity extends AppCompatActivity
     private Animator mCurrentAnimator;
     private ImageView mFakeExpandedImage;
     private AQuery mAQuery;
+    private ServicePhoneStateReceiver phoneConnectivityReceiver;
+    private TelephonyManager telephonyManager;
 
     // Listeners
     private final View.OnClickListener mSnackListener = new View.OnClickListener() {
@@ -75,6 +80,33 @@ public class MainActivity extends AppCompatActivity
             onSupportNavigateUp();
         }
     };
+
+    private class ServicePhoneStateReceiver extends PhoneStateListener {
+        @Override
+        public void onCallStateChanged(int state, String incomingNumber) {
+            Log.i(LOG_TAG, "Call state has changed !" + state + " : "
+                    + incomingNumber);
+        }
+    }
+
+    private void registerBroadcast() {
+        telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        if (phoneConnectivityReceiver == null && telephonyManager != null) {
+            Log.i(LOG_TAG, "Listen for phone state ");
+            phoneConnectivityReceiver = new ServicePhoneStateReceiver();
+            telephonyManager.listen(phoneConnectivityReceiver,
+                    PhoneStateListener.LISTEN_CALL_STATE);
+        }
+    }
+
+    private void unregisterBroadcasts() {
+        if (phoneConnectivityReceiver != null && telephonyManager != null) {
+            Log.i(LOG_TAG, "Unregister telephony receiver");
+            telephonyManager.listen(phoneConnectivityReceiver,
+                    PhoneStateListener.LISTEN_NONE);
+            phoneConnectivityReceiver = null;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,6 +150,38 @@ public class MainActivity extends AppCompatActivity
         Class mainClazz = getFragmentClassFromMaps(null);
         MyBaseFragment mainFragment = getFragmentInstanceFromClass(mainClazz);
         showFragment(mainFragment, true);
+//        registerBroadcast();
+    }
+
+    @Override
+    protected void onStart() {
+        Log.d(LOG_TAG, "Ngoctdn: onStart");
+        super.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        Log.d(LOG_TAG, "Ngoctdn: onResume");
+        super.onResume();
+    }
+
+    @Override
+    protected void onStop() {
+        Log.d(LOG_TAG, "Ngoctdn: onStop");
+        super.onStop();
+    }
+
+    @Override
+    protected void onPause() {
+        Log.d(LOG_TAG, "Ngoctdn: onPause");
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+//        unregisterBroadcasts();
+        Log.d(LOG_TAG, "Ngoctdn: onDestroy");
+        super.onDestroy();
     }
 
     @Override
@@ -265,8 +329,19 @@ public class MainActivity extends AppCompatActivity
     }
 
     private MyBaseFragment getActiveBaseFragments() {
-        MyBaseFragment fragment = (MyBaseFragment) mFragmentManager.findFragmentById(R.id.main_fragment_layout);
-        return fragment;
+        if (getNumBackStackEntry() == 0) {
+            return (MyBaseFragment) mFragmentManager.findFragmentById(R.id.main_fragment_layout);
+        }
+        String tag = mFragmentManager.getBackStackEntryAt(getNumBackStackEntry() - 1).getName();
+        return (MyBaseFragment)mFragmentManager.findFragmentByTag(tag);
+    }
+
+    private MyBaseFragment getMainBaseFragment() {
+        List<Fragment> fragments = mFragmentManager.getFragments();
+        if (fragments.size() >= 2 && fragments.get(0) != null) {
+            return (MyBaseFragment) fragments.get(0);
+        }
+        return getActiveBaseFragments();
     }
 
     public void showFragment(MyBaseFragment fragment, boolean isFirst) {
@@ -277,6 +352,8 @@ public class MainActivity extends AppCompatActivity
         if (!isFirst && mainClazz == fragment.getClass()) {
             return;
         }
+
+        Log.d(LOG_TAG, "showFragment id = " + fragment.getId() + " -- name = " + fragment.getClass().getName());
 
         if (isFirst) {
             FragmentTransaction ft = mFragmentManager.beginTransaction();

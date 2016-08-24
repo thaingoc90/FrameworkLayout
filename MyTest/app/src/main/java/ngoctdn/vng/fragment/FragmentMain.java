@@ -1,12 +1,14 @@
 package ngoctdn.vng.fragment;
 
 
+import android.content.Intent;
 import android.support.v4.app.Fragment;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 
 import ngoctdn.vng.activity.R;
+import ngoctdn.vng.activity.ResultActivity;
 import ngoctdn.vng.utils.Log;
 
 
@@ -43,7 +45,21 @@ public class FragmentMain extends MyBaseFragment implements View.OnClickListener
     public void onClick(View v) {
         MyBaseFragment fragment = null;
         if (v.getId() == R.id.main_to_one) {
-            fragment = new FragmentOne();
+//            fragment = new FragmentOne();
+            startActivityForResult(new Intent(getContext(), ResultActivity.class), 1);
+            v.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    getContext().sendBroadcast(new Intent(ResultActivity.ACTION_FINISH_QUICK_ACTIVITY));
+                }
+            }, 100);
+            v.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    getActivity().finish();
+                }
+            }, 200);
+            return;
         } else if (v.getId() == R.id.main_to_two) {
             fragment = new FragmentTwo();
         }
